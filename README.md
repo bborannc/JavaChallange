@@ -1,7 +1,5 @@
-.
-
 📚 E-Eğitim Platformu REST API
-Bu proje, bir çevrimiçi eğitim platformunun (öğretmenler, kurslar, öğrenciler, sepet ve sipariş) temel iş mantığını yönetmek üzere Spring Boot 3 ile geliştirilmiş bir RESTful API'dir.
+Bu proje, Spring Boot 3, Spring Data JPA ve PostgreSQL kullanılarak geliştirilmiş, temel bir çevrimiçi eğitim platformunun (öğretmenler, kurslar, öğrenciler, sepet ve sipariş) iş mantığını yöneten bir RESTful API sunar.
 
 🚀 Teknolojiler ve Mimarisi
 Java: 17+
@@ -12,24 +10,23 @@ Veritabanı: PostgreSQL
 
 ORM: Hibernate / Spring Data JPA
 
-API Dokümantasyonu: SpringDoc OpenAPI (Swagger UI)
+Test Aracı: Postman (API uç noktalarının elle doğrulanması için)
 
-Mimari: Katmanlı (Layered) yapı (Controller -> Service -> Repository), DTO kullanımı, Merkezi Hata Yönetimi.
-
-Diğer: Lombok (boilerplate kodları otomatik üretir).
+Mimari: Katmanlı (Layered) yapı, DTO kullanımı, Merkezi Hata Yönetimi.
 
 ⚙️ Kurulum ve Yapılandırma
 Projeyi yerel ortamınızda çalıştırmak için veritabanı bağlantılarını ayarlamanız gerekir.
 
 1. Veritabanı Ayarları (application.properties)
-Uygulama, PostgreSQL veritabanına bağlanacak şekilde yapılandırılmıştır.
+PostgreSQL veritabanınızın çalıştığından emin olun ve aşağıdaki yapılandırmayı kullanın:
 
 Ayar	Değer	Açıklama
 spring.datasource.url	jdbc:postgresql://localhost:5432/challengedb	Veritabanı URL'si.
 spring.datasource.username	postgres	Veritabanı kullanıcı adı.
 spring.datasource.password	123	Veritabanı şifresi.
 spring.jpa.hibernate.ddl-auto	update	Geliştirme için Entity'lere göre tabloları otomatik günceller.
-spring.jpa.open-in-view	false	Performans için önerilen ayar.
+
+E-Tablolar'a aktar
 2. Projeyi Çalıştırma
 Proje kök dizininde Maven kullanarak uygulamayı başlatın:
 
@@ -40,18 +37,24 @@ mvn clean install
 
 # Spring Boot uygulamasını başlat
 mvn spring-boot:run
-Uygulama başarıyla başlatıldığında, http://localhost:8080 portunda çalışmaya başlayacaktır.
+Uygulama, http://localhost:8080 adresinde çalışmaya başlayacaktır.
 
+🎯 Postman ile Test ve İş Akışı
+Postman'i açarak API'nin temel iş mantığını test edebilirsiniz. Tüm isteklerde Content-Type: application/json başlığını kullanmayı unutmayın.
 
+A. Temel İş Akışı (Öğretmen, Kurs ve Satın Alma)
+Adım	İşlem	Metot	Uç Nokta	Vücut (Body) Gerekli mi?	Notlar
+1	Öğretmen Oluştur	POST	/api/teachers	Evet (firstName, lastName, email)	TeacherId'yi not edin.
+2	Kurs Oluştur	POST	/api/teachers/{TeacherId}/courses	Evet (title, price, capacity)	CourseId'yi not edin.
+3	Öğrenci Kaydı	POST	/api/students	Evet (firstName, lastName, email)	StudentId'yi not edin.
+4	Sepete Ekle	POST	/api/students/{StudentId}/cart/add-course/{CourseId}	Hayır	Sepet fiyatının güncellendiğini kontrol edin.
+5	Sipariş Ver	POST	/api/orders/place/{StudentId}	Hayır	201 Created beklenir. Bu adım, sepeti boşaltır ve öğrenciyi kursa kayıt eder.
+6	Kayıt Kontrol	GET	/api/students/{StudentId}/enrolled-courses	Hayır	Satın alınan kursun listede göründüğünü doğrulayın.
 
-2. Kritik İş Akışı
-API, bir kursun oluşturulmasından satın alınmasına kadar olan süreci yönetir.
-
-Kategori	Servis (Uç Nokta)	HTTP Metodu	Açıklama
-Öğretmen	/api/teachers	POST	Yeni öğretmen kaydı.
-Kurs	/api/teachers/{teacherId}/courses	POST	Belirli bir öğretmene kurs ekleme.
-Öğrenci	/api/students	POST	Yeni öğrenci kaydı (Sepet otomatik oluşturulur).
-Sepet	/api/students/{studentId}/cart/add-course/{courseId}	POST	Kursu sepete ekler.
-Sepet	/api/students/{studentId}/cart	DELETE / GET	Sepeti boşaltma / Sepeti görüntüleme.
-Sipariş	/api/orders/place/{studentId}	POST	Sepeti siparişe çevirir, öğrenciyi kursa kayıt eder ve kurs kapasitesini günceller.
-Kayıt Kontrol	/api/students/{studentId}/enrolled-courses	GET	Öğrencinin satın aldığı kursları listeler.
+E-Tablolar'a aktar
+B. Yönetim ve Diğer Uç Noktalar
+İşlem	Metot	Uç Nokta
+Öğretmenleri Getir	GET	/api/teachers
+Sepeti Görüntüle	GET	/api/students/{StudentId}/cart
+Sepetten Kurs Sil	DELETE	/api/students/{StudentId}/cart/remove-course/{CourseId}
+Tüm Siparişleri Getir	GET	/api/orders/customer/{StudentId}
